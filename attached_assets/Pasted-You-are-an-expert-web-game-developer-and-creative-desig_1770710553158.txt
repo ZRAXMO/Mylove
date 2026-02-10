@@ -1,0 +1,105 @@
+You are an expert web game developer and creative designer.
+
+Build a browser-based endless runner game inspired by Subway Surfers.
+
+GAME OVERVIEW:
+The game features two human characters:
+- Character A (Player) – runs forward, controlled by the user
+- Character B (Loved One) – runs ahead, slightly faster, always visible
+
+The goal is NOT to catch, but to keep running and progressing emotionally.
+
+CHARACTER SYSTEM:
+- Both characters use customizable PNG image placeholders.
+- The user can upload and replace character PNGs at any time.
+- Characters are rendered in a semi-3D or 2.5D endless runner style.
+
+GAME MECHANICS:
+- Auto-forward running.
+- Player can swipe / arrow keys to:
+  - Move left/right
+  - Jump
+  - Slide
+- Obstacles similar to Subway Surfers:
+  - Trains
+  - Barriers
+  - Gaps
+- No coins; progression is time and distance-based.
+
+LEVEL & MOOD PROGRESSION:
+The game has emotional phases instead of traditional levels.
+
+Phase 1 – Longing 💔
+- Slow pace
+- Dark, muted environment
+- Soft rain or night city visuals
+- Messages appear:
+  "I miss you every second"
+  "Some distances are felt, not seen"
+
+Phase 2 – Hope 🌅
+- Speed slightly increases
+- Warmer lighting
+- Sunrise sky
+- Messages appear:
+  "Love finds its way"
+  "Every step brings me closer"
+
+Phase 3 – Gratitude 💌
+- Bright Valentine-themed visuals
+- Hearts, soft particles, rose petals
+- Messages appear:
+  "Thank you for choosing me"
+  "You are my forever"
+
+Phase 4 – Joy ❤️‍🔥
+- Fast pace
+- Vibrant colors
+- Celebration effects
+- Messages appear:
+  "This run is our story"
+  "I’d run a thousand lives for you"
+
+MOOD SWING SYSTEM:
+- Each phase triggers:
+  - Background color changes
+  - Music changes
+  - Running speed adjustments
+- Messages fade in smoothly at key moments.
+- Messages appear above the runner or floating in the environment.
+
+VALENTINE MESSAGE SYSTEM:
+- Messages are stored in an array.
+- Messages rotate randomly per phase.
+- Messages animate in with soft fade and glow effects.
+- Support custom message input by the user.
+
+UI & UX:
+- Minimal HUD
+- Progress bar labeled "Distance of Love"
+- Heart icon instead of score
+- Restart screen shows:
+  "Love never ends, try again ❤️"
+
+TECHNICAL REQUIREMENTS:
+- Runs fully in the browser
+- Mobile and desktop responsive
+- Smooth 60 FPS animations
+- No backend required for MVP
+- Data stored locally (localStorage)
+
+SUGGESTED TECH STACK:
+- HTML5 Canvas or Three.js
+- JavaScript or TypeScript
+- GSAP for animations
+- Howler.js for sound
+- Vite or Next.js for build
+
+OUTPUT:
+Provide:
+1. Game architecture
+2. Scene flow
+3. State management for mood phases
+4. Character placeholder logic
+5. Message rendering logic
+6. Sample code structure
