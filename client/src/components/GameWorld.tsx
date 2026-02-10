@@ -9,12 +9,21 @@ const LANE_WIDTH = 3;
 const SPEED_SCALE = 0.5;
 
 // --- Assets ---
-// Using colored boxes for now to ensure reliability without external assets
+// Using stylized shapes to ensure reliability without external assets
 // In production, these would be models loaded via useGLTF
 
 function Player({ lane, jump }: { lane: number, jump: boolean }) {
   const { playerImage } = useGameStore();
-  const texture = useTexture(playerImage || "https://images.unsplash.com/photo-1511367461989-f85a21fda167?w=150&h=150&fit=crop");
+  const [texture, setTexture] = useState<THREE.Texture | null>(null);
+
+  useEffect(() => {
+    if (playerImage) {
+      const loader = new THREE.TextureLoader();
+      loader.load(playerImage, (tex) => {
+        setTexture(tex);
+      });
+    }
+  }, [playerImage]);
   
   const mesh = useRef<THREE.Mesh>(null);
   
@@ -34,14 +43,28 @@ function Player({ lane, jump }: { lane: number, jump: boolean }) {
   return (
     <mesh ref={mesh} position={[0, 1, 0]} castShadow>
       <boxGeometry args={[1, 2, 1]} />
-      <meshStandardMaterial map={texture} color={playerImage ? "white" : "hotpink"} />
+      {texture ? (
+        <meshStandardMaterial map={texture} />
+      ) : (
+        <meshStandardMaterial color="hotpink" />
+      )}
     </mesh>
   );
 }
 
 function Partner({ distance }: { distance: number }) {
   const { partnerImage } = useGameStore();
-  const texture = useTexture(partnerImage || "https://images.unsplash.com/photo-1518806118471-f28b20a1d79d?w=150&h=150&fit=crop");
+  const [texture, setTexture] = useState<THREE.Texture | null>(null);
+
+  useEffect(() => {
+    if (partnerImage) {
+      const loader = new THREE.TextureLoader();
+      loader.load(partnerImage, (tex) => {
+        setTexture(tex);
+      });
+    }
+  }, [partnerImage]);
+
   const mesh = useRef<THREE.Mesh>(null);
 
   useFrame((state) => {
@@ -54,7 +77,11 @@ function Partner({ distance }: { distance: number }) {
   return (
     <mesh ref={mesh} position={[0, 1, -20]}>
       <boxGeometry args={[1, 2, 1]} />
-      <meshStandardMaterial map={texture} color={partnerImage ? "white" : "cyan"} opacity={0.8} transparent />
+      {texture ? (
+        <meshStandardMaterial map={texture} opacity={0.8} transparent />
+      ) : (
+        <meshStandardMaterial color="cyan" opacity={0.8} transparent />
+      )}
       <Float speed={2} rotationIntensity={0.2} floatIntensity={0.5}>
         <Text
           position={[0, 2.5, 0]}
@@ -71,10 +98,6 @@ function Partner({ distance }: { distance: number }) {
 }
 
 function Ground({ phase }: { phase: string }) {
-  const texture = useTexture("https://images.unsplash.com/photo-1518837695005-2083093ee35b?w=500&fit=crop"); // Stone texture
-  texture.wrapS = texture.wrapT = THREE.RepeatWrapping;
-  texture.repeat.set(10, 100);
-
   const color = useMemo(() => {
     switch (phase) {
       case 'longing': return '#1a1a2e';
@@ -88,7 +111,7 @@ function Ground({ phase }: { phase: string }) {
   return (
     <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.1, -50]} receiveShadow>
       <planeGeometry args={[20, 200]} />
-      <meshStandardMaterial map={texture} color={color} />
+      <meshStandardMaterial color={color} roughness={0.8} metalness={0.2} />
     </mesh>
   );
 }
@@ -98,14 +121,31 @@ function Obstacle({ position, type }: { position: [number, number, number], type
     <group position={position}>
       {type === 'barrier' ? (
         <mesh position={[0, 0.5, 0]} castShadow>
-          <boxGeometry args={[2, 1, 0.5]} />
+          <boxGeometry args={[2.5, 1, 0.5]} />
           <meshStandardMaterial color="#ef4444" />
         </mesh>
       ) : (
-        <mesh position={[0, 1.5, 0]} castShadow>
-          <boxGeometry args={[2, 3, 4]} />
-          <meshStandardMaterial color="#3b82f6" />
-        </mesh>
+        <group position={[0, 1.5, 0]}>
+          {/* Main Train Body */}
+          <mesh castShadow>
+            <boxGeometry args={[2.5, 3, 8]} />
+            <meshStandardMaterial color="#334155" />
+          </mesh>
+          {/* Windows */}
+          <mesh position={[1.26, 0.5, 0]}>
+            <boxGeometry args={[0.05, 0.8, 6]} />
+            <meshStandardMaterial color="#94a3b8" emissive="#94a3b8" emissiveIntensity={0.5} />
+          </mesh>
+          <mesh position={[-1.26, 0.5, 0]}>
+            <boxGeometry args={[0.05, 0.8, 6]} />
+            <meshStandardMaterial color="#94a3b8" emissive="#94a3b8" emissiveIntensity={0.5} />
+          </mesh>
+          {/* Front Light */}
+          <mesh position={[0, 0, -4.01]}>
+            <boxGeometry args={[1.5, 1, 0.1]} />
+            <meshStandardMaterial color="#fcd34d" emissive="#fcd34d" emissiveIntensity={1} />
+          </mesh>
+        </group>
       )}
     </group>
   );
@@ -116,36 +156,36 @@ function EnvironmentalEffects({ phase }: { phase: string }) {
     <>
       {phase === 'longing' && (
         <>
-          <fog attach="fog" args={['#111827', 5, 40]} />
-          <ambientLight intensity={0.2} />
-          <directionalLight position={[0, 10, 5]} intensity={0.5} color="#60a5fa" castShadow />
-          <Cloud position={[-10, 5, -20]} opacity={0.5} />
-          <Cloud position={[10, 5, -30]} opacity={0.5} />
+          <fog attach="fog" args={['#0f172a', 10, 50]} />
+          <ambientLight intensity={0.5} />
+          <directionalLight position={[0, 10, 5]} intensity={0.8} color="#60a5fa" castShadow />
+          <Cloud position={[-10, 5, -20]} opacity={0.3} />
+          <Cloud position={[10, 5, -30]} opacity={0.3} />
         </>
       )}
       
       {phase === 'hope' && (
         <>
-          <fog attach="fog" args={['#fed7aa', 10, 60]} />
-          <ambientLight intensity={0.5} />
-          <directionalLight position={[10, 5, 5]} intensity={1.5} color="#fdba74" castShadow />
+          <fog attach="fog" args={['#431407', 15, 70]} />
+          <ambientLight intensity={0.8} />
+          <directionalLight position={[10, 5, 5]} intensity={2} color="#fdba74" castShadow />
         </>
       )}
 
       {phase === 'gratitude' && (
         <>
-          <fog attach="fog" args={['#dbeafe', 20, 80]} />
-          <ambientLight intensity={0.8} />
-          <directionalLight position={[-5, 10, -5]} intensity={1.2} color="#ffffff" castShadow />
+          <fog attach="fog" args={['#1e1b4b', 25, 100]} />
+          <ambientLight intensity={1.2} />
+          <directionalLight position={[-5, 10, -5]} intensity={1.5} color="#ffffff" castShadow />
           <Stars radius={100} depth={50} count={1000} factor={4} saturation={0} fade speed={1} />
         </>
       )}
 
       {phase === 'joy' && (
         <>
-          <fog attach="fog" args={['#fbcfe8', 15, 70]} />
-          <ambientLight intensity={1} />
-          <directionalLight position={[0, 10, 0]} intensity={1.5} color="#f472b6" castShadow />
+          <fog attach="fog" args={['#500724', 20, 90]} />
+          <ambientLight intensity={1.5} />
+          <directionalLight position={[0, 10, 0]} intensity={2} color="#f472b6" castShadow />
           <Stars radius={100} depth={50} count={2000} factor={4} saturation={1} fade speed={2} />
         </>
       )}
@@ -231,9 +271,12 @@ function GameScene() {
         // Collision Detection
         for (const o of next) {
             // Player is at z=0. Check proximity.
-            if (o.z > -1 && o.z < 1) {
+            // Adjust detection range based on obstacle type (trains are longer)
+            const collisionDepth = o.type === 'train' ? 4 : 1;
+            if (o.z > -collisionDepth && o.z < 1) {
                 if (o.lane === lane) {
                     // Simple collision logic: if not jumping over barrier, crash
+                    // You can't jump over trains
                     if (o.type === 'train' || (o.type === 'barrier' && !jump)) {
                         endGame();
                     }
@@ -241,7 +284,7 @@ function GameScene() {
             }
         }
         
-        return next.filter(o => o.z < 10); // Remove passed obstacles
+        return next.filter(o => o.z < 20); // Remove passed obstacles
     });
   });
 
