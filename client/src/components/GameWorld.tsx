@@ -1,5 +1,5 @@
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
-import { Text, useTexture, Float, Stars, Cloud } from "@react-three/drei";
+import { Text, Float, Stars, Cloud } from "@react-three/drei";
 import { useGameStore } from "@/hooks/use-game-store";
 import { Suspense, useRef, useState, useEffect, useMemo } from "react";
 import * as THREE from "three";
@@ -8,13 +8,13 @@ import * as THREE from "three";
 const LANE_WIDTH = 3;
 const SPEED_SCALE = 0.5;
 
-// --- Assets ---
-// Using stylized shapes to ensure reliability without external assets
-// In production, these would be models loaded via useGLTF
-
+// Boy with Rose (Player) - Simple 3D Character
 function Player({ lane, jump }: { lane: number, jump: boolean }) {
   const { playerImage } = useGameStore();
   const [texture, setTexture] = useState<THREE.Texture | null>(null);
+  
+  const groupRef = useRef<THREE.Group>(null);
+  const roseRef = useRef<THREE.Group>(null);
 
   useEffect(() => {
     if (playerImage) {
@@ -25,36 +25,78 @@ function Player({ lane, jump }: { lane: number, jump: boolean }) {
     }
   }, [playerImage]);
   
-  const mesh = useRef<THREE.Mesh>(null);
-  
   useFrame((state, delta) => {
-    if (!mesh.current) return;
+    if (!groupRef.current) return;
+    
     // Smooth lane changing
-    mesh.current.position.x = THREE.MathUtils.lerp(mesh.current.position.x, (lane - 1) * LANE_WIDTH, delta * 10);
+    groupRef.current.position.x = THREE.MathUtils.lerp(groupRef.current.position.x, (lane - 1) * LANE_WIDTH, delta * 10);
     
     // Jump animation
     if (jump) {
-      mesh.current.position.y = THREE.MathUtils.lerp(mesh.current.position.y, 2.5, delta * 15);
+      groupRef.current.position.y = THREE.MathUtils.lerp(groupRef.current.position.y, 2.5, delta * 15);
     } else {
-      mesh.current.position.y = THREE.MathUtils.lerp(mesh.current.position.y, 1, delta * 15);
+      groupRef.current.position.y = THREE.MathUtils.lerp(groupRef.current.position.y, 0, delta * 15);
+    }
+
+    // Running animation - simple bobbing
+    if (!jump) {
+      groupRef.current.position.y = Math.sin(state.clock.elapsedTime * 8) * 0.1;
+    }
+
+    // Animate rose (bobbing and rotating)
+    if (roseRef.current) {
+      roseRef.current.rotation.y = state.clock.elapsedTime * 2;
+      roseRef.current.position.y = Math.sin(state.clock.elapsedTime * 4) * 0.1;
     }
   });
 
   return (
-    <mesh ref={mesh} position={[0, 1, 0]} castShadow>
-      <boxGeometry args={[1, 2, 1]} />
-      {texture ? (
-        <meshStandardMaterial map={texture} />
-      ) : (
-        <meshStandardMaterial color="hotpink" />
-      )}
-    </mesh>
+    <group ref={groupRef} position={[0, 0, 2]}>
+      {/* Simple Boy Character - Body */}
+      <mesh position={[0, 1.2, 5]} castShadow>
+        <boxGeometry args={[0.8, 1.6, 0.6]} />
+        {texture ? (
+          <meshStandardMaterial map={texture} />
+        ) : (
+          <meshStandardMaterial color="#4A90E2" />
+        )}
+      </mesh>
+      
+      {/* Head */}
+      <mesh position={[0, 2.2, 0]} castShadow>
+        <sphereGeometry args={[0.4, 16, 16]} />
+        <meshStandardMaterial color="#FFD1A4" />
+      </mesh>
+      
+      {/* Rose in hand */}
+      <group ref={roseRef} position={[0.5, 5, 1.2]}>
+        {/* Rose flower */}
+        <mesh position={[0, 0.3, 0]}>
+          <sphereGeometry args={[0.12, 8, 8]} />
+          <meshStandardMaterial color="#FF1744" emissive="#FF1744" emissiveIntensity={0.5} />
+        </mesh>
+        {/* Stem */}
+        <mesh position={[0, 0, 0]}>
+          <cylinderGeometry args={[0.02, 0.02, 0.5, 8]} />
+          <meshStandardMaterial color="#2E7D32" />
+        </mesh>
+      </group>
+      
+      {/* Heart above */}
+      <Float speed={3} floatIntensity={0.2}>
+        <Text position={[0, 3, 0]} fontSize={0.3} color="#FF1744">
+          ❤️
+        </Text>
+      </Float>
+    </group>
   );
 }
 
+// Girl (Partner) - Running ahead
 function Partner({ distance }: { distance: number }) {
   const { partnerImage } = useGameStore();
   const [texture, setTexture] = useState<THREE.Texture | null>(null);
+  const [showProposal, setShowProposal] = useState(false);
 
   useEffect(() => {
     if (partnerImage) {
@@ -66,34 +108,66 @@ function Partner({ distance }: { distance: number }) {
   }, [partnerImage]);
 
   const mesh = useRef<THREE.Mesh>(null);
+  const proposalDistance = 15; // Distance at which they get close
 
   useFrame((state) => {
     if (mesh.current) {
       // Bobbing motion
       mesh.current.position.y = 1 + Math.sin(state.clock.elapsedTime * 3) * 0.2;
+      
+      // Check if boy is getting close for proposal
+      const currentZ = mesh.current.position.z;
+      if (Math.abs(currentZ) < proposalDistance && distance > 100) {
+        setShowProposal(true);
+      } else {
+        setShowProposal(false);
+      }
     }
   });
 
   return (
-    <mesh ref={mesh} position={[0, 1, -20]}>
-      <boxGeometry args={[1, 2, 1]} />
-      {texture ? (
-        <meshStandardMaterial map={texture} opacity={0.8} transparent />
-      ) : (
-        <meshStandardMaterial color="cyan" opacity={0.8} transparent />
+    <group>
+      <mesh ref={mesh} position={[0, 1, -15]}>
+        <boxGeometry args={[0.8, 1.6, 0.6]} />
+        {texture ? (
+          <meshStandardMaterial map={texture} />
+        ) : (
+          <meshStandardMaterial color="#FF69B4" />
+        )}
+      </mesh>
+      
+      {/* Small text above - only when far */}
+      {!showProposal && (
+        <Float speed={2} rotationIntensity={0.1} floatIntensity={0.3}>
+          <Text
+            position={[0, 2.5, -15]}
+            fontSize={0.3}
+            color="#FF1744"
+            anchorX="center"
+            anchorY="middle"
+          >
+            💖
+          </Text>
+        </Float>
       )}
-      <Float speed={2} rotationIntensity={0.2} floatIntensity={0.5}>
-        <Text
-          position={[0, 2.5, 0]}
-          fontSize={1}
-          color="white"
-          anchorX="center"
-          anchorY="middle"
-        >
-          Wait for me!
-        </Text>
-      </Float>
-    </mesh>
+
+      {/* Proposal message - only when close */}
+      {showProposal && (
+        <Float speed={2} rotationIntensity={0.1} floatIntensity={0.3}>
+          <Text
+            position={[0, 2.8, -15]}
+            fontSize={0.5}
+            color="#FF1744"
+            anchorX="center"
+            anchorY="middle"
+            outlineWidth={0.03}
+            outlineColor="#ffffff"
+          >
+            💕 Will you be mine? 💕
+          </Text>
+        </Float>
+      )}
+    </group>
   );
 }
 
@@ -310,7 +384,7 @@ function GameScene() {
 export function GameWorld() {
   return (
     <div id="game-canvas">
-      <Canvas shadows camera={{ position: [0, 5, 8], fov: 50 }}>
+      <Canvas shadows camera={{ position: [0, 4, 10], fov: 60 }}>
         <Suspense fallback={null}>
             <GameScene />
         </Suspense>

@@ -12,10 +12,13 @@ interface GameState {
   // Runtime
   isPlaying: boolean;
   isGameOver: boolean;
+  isPaused: boolean;
   distance: number;
   score: number;
   phase: GamePhase;
   speed: number;
+  level: number;
+  heartsCollected: number;
   
   // Actions
   setPlayerImage: (img: string | null) => void;
@@ -25,8 +28,10 @@ interface GameState {
   startGame: () => void;
   endGame: () => void;
   resetGame: () => void;
+  togglePause: () => void;
   updateDistance: (delta: number) => void;
   setPhase: (phase: GamePhase) => void;
+  incrementHearts: () => void;
 }
 
 const PHASES: { limit: number, phase: GamePhase }[] = [
@@ -48,19 +53,24 @@ export const useGameStore = create<GameState>()(
       // Initial Runtime
       isPlaying: false,
       isGameOver: false,
+      isPaused: false,
       distance: 0,
       score: 0,
       phase: 'longing',
       speed: 10, // Base speed
+      level: 1,
+      heartsCollected: 0,
       
       setPlayerImage: (img) => set({ playerImage: img }),
       setPartnerImage: (img) => set({ partnerImage: img }),
       setPlayerName: (name) => set({ playerName: name }),
       setHasSeenIntro: (seen) => set({ hasSeenIntro: seen }),
       
-      startGame: () => set({ isPlaying: true, isGameOver: false, distance: 0, phase: 'longing', speed: 10 }),
-      endGame: () => set({ isPlaying: false, isGameOver: true }),
-      resetGame: () => set({ isPlaying: false, isGameOver: false, distance: 0, phase: 'longing', speed: 10 }),
+      startGame: () => set({ isPlaying: true, isGameOver: false, isPaused: false, distance: 0, phase: 'longing', speed: 10, level: 1, heartsCollected: 0 }),
+      endGame: () => set({ isPlaying: false, isGameOver: true, isPaused: false }),
+      resetGame: () => set({ isPlaying: false, isGameOver: false, isPaused: false, distance: 0, phase: 'longing', speed: 10, level: 1, heartsCollected: 0 }),
+      togglePause: () => set((state) => ({ isPaused: !state.isPaused })),
+      incrementHearts: () => set((state) => ({ heartsCollected: state.heartsCollected + 1 })),
       
       updateDistance: (delta) => {
         const { distance, phase, speed } = get();
@@ -75,10 +85,13 @@ export const useGameStore = create<GameState>()(
           }
         }
         
+        // Calculate level (every 500 meters = 1 level)
+        const newLevel = Math.floor(newDist / 500) + 1;
+        
         // Increase speed slightly over time
         const newSpeed = Math.min(25, 10 + (newDist / 500));
         
-        set({ distance: newDist, phase: newPhase, speed: newSpeed });
+        set({ distance: newDist, phase: newPhase, speed: newSpeed, level: newLevel });
       },
       
       setPhase: (phase) => set({ phase }),
