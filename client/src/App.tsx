@@ -1,8 +1,8 @@
-import { Switch, Route } from "wouter";
+import { Switch, Route, Router } from "wouter";
 import Home from "@/pages/Home";
 import NotFound from "@/pages/not-found";
 
-function Router() {
+function AppRouter() {
   return (
     <Switch>
       <Route path="/" component={Home} />
@@ -13,7 +13,9 @@ function Router() {
 
 function App() {
   return (
-    <Router />
+    <Router base="/Mylove">
+      <AppRouter />
+    </Router>
   );
 }
 
