@@ -277,24 +277,6 @@ The following were removed in the database cleanup:
 - **Imports**: Absolute imports using @ aliases
 - **Styling**: Tailwind utility classes, CSS variables for themes
 
-## 🐛 Troubleshooting
-
-### Common Issues
-
-**Game not loading**
-- Check browser console for errors
-- Ensure WebGL is supported in your browser
-- Clear localStorage if experiencing state issues
-
-**Performance issues**
-- Reduce particle count in phase settings
-- Lower frame rate cap
-- Disable motion blur effects
-
-**Scores not saving**
-- Check localStorage is not full
-- Verify browser allows localStorage
-- Check browser console for storage errors
 
 ## 📄 License
 
